@@ -190,9 +190,19 @@ static int build_envs(const char** orig_envp, bool propagate, const char*** out_
     /* First, go through original variables and copy the ones that we're going to use (because of
      * `propagate`, or because passthrough is specified for that variable in manifest). */
     for (const char** orig_env = orig_envp; *orig_env; orig_env++) {
+        if(strstartswith(*orig_env, "REMOTE_CONTAINERS")){
+            log_debug("Detected remote containers");
+            continue;
+        }
+
         char* orig_env_key_end = strchr(*orig_env, '=');
-        if (!orig_env_key_end)
-            return -PAL_ERROR_INVAL;
+        if (!orig_env_key_end){
+            // This is a workaround for REMOTE_CONTAINERS_SOCKETS=["/root/.gnupg/S.gpg-agent"], which will be decode incorrectly
+            continue;
+            // log_error("In orig env key end");
+
+            // return -PAL_ERROR_INVAL;
+        }
 
         char* env_key = alloc_substr(*orig_env, orig_env_key_end - *orig_env);
         if (!env_key)
